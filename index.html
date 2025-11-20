@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能多语言翻译器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #1d1d1f;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            max-width: 1300px;
+            width: 100%;
+            padding: 50px;
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #1d1d1f;
+            margin-bottom: 40px;
+            font-size: 2.8em;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .translator-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .input-panel, .output-panel {
+            background: #f9f9f9;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e5e5e5;
+            transition: all 0.2s ease;
+        }
+
+        .input-panel:hover, .output-panel:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .panel-title {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .language-select {
+            padding: 8px 16px;
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 10px;
+            font-size: 0.95em;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.9);
+            color: #007aff;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: 500;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .language-select:hover {
+            background: rgba(0, 122, 255, 0.08);
+            border-color: #007aff;
+        }
+
+        .language-select:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 220px;
+            padding: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            font-size: 1.15em;
+            resize: vertical;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+            background: rgba(255, 255, 255, 0.6);
+            color: #1d1d1f;
+            line-height: 1.6;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        textarea::placeholder {
+            color: #86868b;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-danger {
+            background: #007aff;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #0051d5;
+        }
+
+        .btn-danger:active {
+            background: #004fc7;
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background: #34c759;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #30b350;
+        }
+
+        .btn-success:active {
+            background: #2aa047;
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: rgba(120, 120, 128, 0.16);
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(120, 120, 128, 0.24);
+        }
+
+        .btn-secondary:active {
+            background: rgba(120, 120, 128, 0.32);
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .recording {
+            background: #ff3b30 !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(255, 59, 48, 0);
+            }
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            background: #f0f0f0;
+            padding: 6px;
+            border-radius: 12px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #1d1d1f;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #007aff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .mode-btn:active {
+            transform: scale(0.98);
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 12px 20px;
+            background: #f0f7ff;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 0.95em;
+            color: #007aff;
+            font-weight: 500;
+        }
+
+        .status-bar.recording {
+            background: #fff0f0;
+            color: #ff3b30;
+        }
+
+        .status-bar.translating {
+            background: #f8f0ff;
+            color: #af52de;
+        }
+
+        .char-count {
+            text-align: right;
+            color: #86868b;
+            font-size: 0.85em;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .feature-hint {
+            background: #f0f7ff;
+            border-left: 3px solid #007aff;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border-radius: 12px;
+            color: #1d1d1f;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 968px) {
+            .translator-section {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.2em;
+            }
+
+            .container {
+                padding: 30px 24px;
+            }
+        }
+
+        .quick-phrases {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .phrase-btn {
+            padding: 8px 16px;
+            background: #f0f7ff;
+            border: 1px solid #d0e5ff;
+            border-radius: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+            color: #007aff;
+            font-weight: 500;
+        }
+
+        .phrase-btn:hover {
+            background: #007aff;
+            color: white;
+            border-color: #007aff;
+        }
+
+        .phrase-btn:active {
+            transform: scale(0.96);
+        }
+
+        .history-panel {
+            background: #f9f9f9;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 24px;
+            max-height: 320px;
+            overflow-y: auto;
+            border: 1px solid #e5e5e5;
+        }
+
+        .history-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .history-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .history-panel::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+        }
+
+        .history-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        .history-item {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #e5e5e5;
+        }
+
+        .history-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-color: #007aff;
+        }
+
+        .history-item:active {
+            transform: scale(0.99);
+        }
+
+        .history-text {
+            font-size: 0.95em;
+            color: #1d1d1f;
+            font-weight: 500;
+        }
+
+        .history-translation {
+            font-size: 0.9em;
+            color: #86868b;
+            margin-top: 6px;
+        }
+
+        .translating-indicator {
+            display: none;
+            text-align: center;
+            color: #007aff;
+            font-size: 0.9em;
+            margin-top: 12px;
+            font-weight: 500;
+        }
+
+        .translating-indicator.active {
+            display: block;
+        }
+
+        .voice-controls {
+            background: #f0f7ff;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid #d0e5ff;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-track {
+            background: rgba(120, 120, 128, 0.2);
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            background: #007aff;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(0, 122, 255, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(0.95);
+        }
+
+        input[type="range"]::-moz-range-track {
+            background: rgba(120, 120, 128, 0.2);
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            background: #007aff;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 122, 255, 0.3);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 智能多语言翻译器</h1>
+        
+        <div class="feature-hint">
+            <strong>💡 智能提示：</strong> 无需点击翻译按钮，输入文字或语音后会自动翻译。支持多语言实时互译。
+        </div>
+
+        <div class="status-bar" id="statusBar">
+            准备就绪
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="auto">🔄 自动检测翻译</button>
+            <button class="mode-btn" data-mode="chinese-to-english">🇨🇳→🇬🇧 中文转英文（口语化）</button>
+            <button class="mode-btn" data-mode="voice-translation">🎤 语音实时翻译</button>
+        </div>
+
+        <div class="translator-section">
+            <div class="input-panel">
+                <div class="panel-header">
+                    <span class="panel-title">源语言</span>
+                    <select class="language-select" id="sourceLang">
+                        <option value="auto">自动检测</option>
+                        <option value="zh-CN">中文（简体）</option>
+                        <option value="zh-TW">中文（繁体）</option>
+                        <option value="en-US">英语</option>
+                        <option value="ja-JP">日语</option>
+                        <option value="ko-KR">韩语</option>
+                        <option value="fr-FR">法语</option>
+                        <option value="de-DE">德语</option>
+                        <option value="es-ES">西班牙语</option>
+                        <option value="ru-RU">俄语</option>
+                        <option value="ar-SA">阿拉伯语</option>
+                        <option value="pt-PT">葡萄牙语</option>
+                        <option value="it-IT">意大利语</option>
+                        <option value="th-TH">泰语</option>
+                        <option value="vi-VN">越南语</option>
+                    </select>
+                </div>
+                <textarea id="inputText" placeholder="开始输入或点击麦克风说话，将自动翻译..."></textarea>
+                <div class="char-count" id="charCount">0 / 5000 字符</div>
+                <div class="translating-indicator" id="translatingIndicator">⏳ 正在翻译...</div>
+                <div class="controls">
+                    <button class="btn btn-danger" id="voiceBtn">
+                        <span>🎤 开始语音</span>
+                    </button>
+                    <button class="btn btn-secondary" id="clearBtn">
+                        <span>✕ 清空</span>
+                    </button>
+                    <button class="btn btn-secondary" id="swapBtn" title="交换语言">
+                        <span>⇄ 交换</span>
+                    </button>
+                </div>
+                <div class="quick-phrases">
+                    <span style="color: #666; font-size: 0.9em; width: 100%;">快捷短语：</span>
+                    <button class="phrase-btn" data-phrase="你好，很高兴认识你">你好，很高兴认识你</button>
+                    <button class="phrase-btn" data-phrase="这个多少钱？">这个多少钱？</button>
+                    <button class="phrase-btn" data-phrase="谢谢你的帮助">谢谢你的帮助</button>
+                    <button class="phrase-btn" data-phrase="请问洗手间在哪里？">请问洗手间在哪里？</button>
+                    <button class="phrase-btn" data-phrase="我不太明白，能再说一遍吗？">我不太明白</button>
+                </div>
+            </div>
+
+            <div class="output-panel">
+                <div class="panel-header">
+                    <span class="panel-title">目标语言</span>
+                    <select class="language-select" id="targetLang">
+                        <option value="en-US">英语</option>
+                        <option value="zh-CN">中文（简体）</option>
+                        <option value="zh-TW">中文（繁体）</option>
+                        <option value="ja-JP">日语</option>
+                        <option value="ko-KR">韩语</option>
+                        <option value="fr-FR">法语</option>
+                        <option value="de-DE">德语</option>
+                        <option value="es-ES">西班牙语</option>
+                        <option value="ru-RU">俄语</option>
+                        <option value="ar-SA">阿拉伯语</option>
+                        <option value="pt-PT">葡萄牙语</option>
+                        <option value="it-IT">意大利语</option>
+                        <option value="th-TH">泰语</option>
+                        <option value="vi-VN">越南语</option>
+                    </select>
+                </div>
+                <textarea id="outputText" placeholder="翻译结果将显示在这里..." readonly></textarea>
+                <div class="char-count" id="outputCharCount">0 字符</div>
+                <div class="controls">
+                    <button class="btn btn-success" id="speakBtn">
+                        <span>🔊 朗读翻译</span>
+                    </button>
+                    <button class="btn btn-secondary" id="copyBtn">
+                        <span>📋 复制结果</span>
+                    </button>
+                </div>
+                <div class="voice-controls" id="voiceControls" style="margin-top: 12px; display: none;">
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9em; color: #86868b;">
+                        <span>🎚️ 语速：</span>
+                        <input type="range" id="speedControl" min="0.5" max="1.5" step="0.1" value="0.9" 
+                               style="flex: 1; height: 4px; border-radius: 2px; outline: none; appearance: none; -webkit-appearance: none; 
+                                      background: linear-gradient(to right, #007aff 0%, #007aff 40%, rgba(120,120,128,0.2) 40%, rgba(120,120,128,0.2) 100%);">
+                        <span id="speedValue" style="min-width: 35px; font-weight: 600; color: #007aff;">0.9x</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-panel" id="historyPanel">
+            <div class="panel-title" style="margin-bottom: 15px;">📚 翻译历史</div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let recognition = null;
+        let isRecording = false;
+        let currentMode = 'auto';
+        let translationHistory = [];
+        let translationTimer = null;
+        let isTranslating = false;
+
+        // DOM 元素
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const sourceLang = document.getElementById('sourceLang');
+        const targetLang = document.getElementById('targetLang');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const swapBtn = document.getElementById('swapBtn');
+        const speakBtn = document.getElementById('speakBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const statusBar = document.getElementById('statusBar');
+        const charCount = document.getElementById('charCount');
+        const outputCharCount = document.getElementById('outputCharCount');
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        const phraseBtns = document.querySelectorAll('.phrase-btn');
+        const historyList = document.getElementById('historyList');
+        const translatingIndicator = document.getElementById('translatingIndicator');
+        const voiceControls = document.getElementById('voiceControls');
+        const speedControl = document.getElementById('speedControl');
+        const speedValue = document.getElementById('speedValue');
+        
+        // 用户自定义语速
+        let userSpeechRate = 0.9;
+
+        // 初始化语音识别
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+
+                recognition.onstart = () => {
+                    isRecording = true;
+                    voiceBtn.classList.add('recording');
+                    voiceBtn.innerHTML = '<span>⏹ 停止录音</span>';
+                    statusBar.classList.add('recording');
+                    statusBar.textContent = '🎤 正在录音中，说完话会自动翻译...';
+                };
+
+                recognition.onresult = (event) => {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    if (finalTranscript) {
+                        inputText.value += finalTranscript + ' ';
+                        updateCharCount();
+                        
+                        // 语音输入完成后自动翻译（延迟800ms，避免太快）
+                        scheduleTranslation(800);
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('语音识别错误:', event.error);
+                    updateStatus(`语音识别错误: ${getErrorMessage(event.error)}`, true);
+                    stopRecording();
+                };
+
+                recognition.onend = () => {
+                    if (isRecording) {
+                        // 如果用户没有手动停止，继续录音
+                        recognition.start();
+                    } else {
+                        stopRecording();
+                    }
+                };
+
+                return true;
+            } else {
+                alert('您的浏览器不支持语音识别功能。请使用 Chrome、Edge 或 Safari 浏览器。');
+                return false;
+            }
+        }
+
+        function getErrorMessage(error) {
+            const errorMessages = {
+                'no-speech': '未检测到语音',
+                'audio-capture': '无法捕获音频',
+                'not-allowed': '未授予麦克风权限',
+                'network': '网络错误',
+                'aborted': '录音被中断'
+            };
+            return errorMessages[error] || error;
+        }
+
+        function startRecording() {
+            if (!recognition && !initSpeechRecognition()) {
+                return;
+            }
+
+            const langCode = sourceLang.value === 'auto' ? 'zh-CN' : sourceLang.value;
+            recognition.lang = langCode;
+            
+            try {
+                recognition.start();
+            } catch (error) {
+                console.error('启动录音失败:', error);
+                updateStatus('启动录音失败，请重试', true);
+            }
+        }
+
+        function stopRecording() {
+            if (recognition) {
+                isRecording = false;
+                voiceBtn.classList.remove('recording');
+                voiceBtn.innerHTML = '<span>🎤 开始语音</span>';
+                statusBar.classList.remove('recording');
+                statusBar.textContent = '录音已停止，准备翻译...';
+                try {
+                    recognition.stop();
+                    // 停止录音后自动翻译
+                    if (inputText.value.trim()) {
+                        scheduleTranslation(500);
+                    }
+                } catch (error) {
+                    console.error('停止录音失败:', error);
+                }
+            }
+        }
+
+        // 安排翻译（带防抖）
+        function scheduleTranslation(delay = 1000) {
+            // 清除之前的定时器
+            if (translationTimer) {
+                clearTimeout(translationTimer);
+            }
+
+            // 设置新的定时器
+            translationTimer = setTimeout(() => {
+                const text = inputText.value.trim();
+                if (text && !isTranslating) {
+                    translate();
+                }
+            }, delay);
+        }
+
+        // 检测文本语言
+        function detectLanguage(text) {
+            // 简单的语言检测逻辑
+            const chinesePattern = /[\u4e00-\u9fa5]/;
+            const japanesePattern = /[\u3040-\u309f\u30a0-\u30ff]/;
+            const koreanPattern = /[\uac00-\ud7af]/;
+            const arabicPattern = /[\u0600-\u06ff]/;
+            const thaiPattern = /[\u0e00-\u0e7f]/;
+            const cyrillicPattern = /[\u0400-\u04ff]/;
+            
+            if (chinesePattern.test(text)) {
+                return 'zh-CN';
+            } else if (japanesePattern.test(text)) {
+                return 'ja';
+            } else if (koreanPattern.test(text)) {
+                return 'ko';
+            } else if (arabicPattern.test(text)) {
+                return 'ar';
+            } else if (thaiPattern.test(text)) {
+                return 'th';
+            } else if (cyrillicPattern.test(text)) {
+                return 'ru';
+            } else {
+                // 默认为英文
+                return 'en';
+            }
+        }
+
+        // 翻译功能（改进版 - 修复自动检测bug）
+        async function translate() {
+            const text = inputText.value.trim();
+            if (!text) {
+                outputText.value = '';
+                updateOutputCharCount();
+                return;
+            }
+
+            // 防止重复翻译
+            if (isTranslating) {
+                return;
+            }
+
+            isTranslating = true;
+            translatingIndicator.classList.add('active');
+            statusBar.classList.add('translating');
+            updateStatus('⏳ 正在智能翻译...', false);
+
+            try {
+                let sourceLangCode = sourceLang.value;
+                let targetLangCode = targetLang.value;
+
+                // 如果是自动检测，先检测语言
+                if (sourceLangCode === 'auto') {
+                    sourceLangCode = detectLanguage(text);
+                    console.log('检测到的语言:', sourceLangCode);
+                }
+
+                // 转换语言代码为 API 格式
+                const sourceCode = convertToMyMemoryCode(sourceLangCode);
+                const targetCode = convertToMyMemoryCode(targetLangCode);
+
+                // 如果源语言和目标语言相同，不翻译
+                if (sourceCode === targetCode) {
+                    outputText.value = text;
+                    updateOutputCharCount();
+                    updateStatus('✅ 源语言与目标语言相同', false);
+                    return;
+                }
+
+                // 尝试多个翻译API
+                let translatedText = null;
+                
+                // 方法1: 使用 MyMemory API
+                try {
+                    const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceCode}|${targetCode}`;
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+
+                    if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+                        translatedText = data.responseData.translatedText;
+                        
+                        // 检查是否是有效翻译（不只是返回原文）
+                        if (translatedText && translatedText.toLowerCase() !== text.toLowerCase()) {
+                            console.log('MyMemory 翻译成功');
+                        } else {
+                            throw new Error('翻译结果无效');
+                        }
+                    } else {
+                        throw new Error('API返回错误');
+                    }
+                } catch (apiError) {
+                    console.log('MyMemory API失败，尝试LibreTranslate...', apiError);
+                    
+                    // 方法2: 使用 LibreTranslate (备用)
+                    try {
+                        const libreUrl = 'https://libretranslate.de/translate';
+                        const libreResponse = await fetch(libreUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                q: text,
+                                source: sourceCode,
+                                target: targetCode,
+                                format: 'text'
+                            })
+                        });
+                        
+                        if (libreResponse.ok) {
+                            const libreData = await libreResponse.json();
+                            if (libreData.translatedText) {
+                                translatedText = libreData.translatedText;
+                                console.log('LibreTranslate 翻译成功');
+                            }
+                        }
+                    } catch (libreError) {
+                        console.log('LibreTranslate 也失败了', libreError);
+                    }
+                }
+
+                // 如果所有API都失败，使用本地翻译
+                if (!translatedText) {
+                    console.log('尝试本地翻译...');
+                    translatedText = localTranslate(text, targetLangCode) || 
+                                   enhancedLocalTranslate(text, sourceCode, targetCode);
+                }
+
+                if (translatedText) {
+                    // 如果是中文转英文口语化模式，进行口语化处理
+                    if (currentMode === 'chinese-to-english' && targetCode === 'en') {
+                        translatedText = makeColloquial(translatedText);
+                    }
+
+                    outputText.value = translatedText;
+                    updateOutputCharCount();
+                    updateStatus('✅ 翻译完成', false);
+                    
+                    // 显示语音控制面板
+                    if (voiceControls) {
+                        voiceControls.style.display = 'block';
+                    }
+
+                    // 添加到历史记录
+                    addToHistory(text, translatedText, sourceCode, targetCode);
+                } else {
+                    throw new Error('所有翻译方法均失败');
+                }
+
+            } catch (error) {
+                console.error('翻译错误:', error);
+                outputText.value = '抱歉，翻译服务暂时不可用。请稍后重试或更换翻译内容。';
+                updateStatus('翻译遇到问题', false);
+                
+                if (voiceControls) {
+                    voiceControls.style.display = 'none';
+                }
+            } finally {
+                isTranslating = false;
+                translatingIndicator.classList.remove('active');
+                statusBar.classList.remove('translating');
+            }
+        }
+
+        // 增强的本地翻译（更多词汇）
+        function enhancedLocalTranslate(text, sourceCode, targetCode) {
+            const translations = {
+                'zh-CN_en': {
+                    '你好': 'Hello',
+                    '您好': 'Hello',
+                    '谢谢': 'Thank you',
+                    '再见': 'Goodbye',
+                    '早上好': 'Good morning',
+                    '晚上好': 'Good evening',
+                    '晚安': 'Good night',
+                    '是': 'Yes',
+                    '不是': 'No',
+                    '对不起': 'Sorry',
+                    '请': 'Please',
+                    '谢谢你': 'Thank you',
+                    '不客气': 'You\'re welcome',
+                    '我爱你': 'I love you',
+                    '帮助': 'Help',
+                    '朋友': 'Friend',
+                    '家人': 'Family',
+                    '工作': 'Work',
+                    '学习': 'Study'
+                },
+                'en_zh-CN': {
+                    'hello': '你好',
+                    'hi': '嗨',
+                    'thank you': '谢谢',
+                    'thanks': '谢谢',
+                    'goodbye': '再见',
+                    'bye': '再见',
+                    'good morning': '早上好',
+                    'good evening': '晚上好',
+                    'good night': '晚安',
+                    'yes': '是的',
+                    'no': '不',
+                    'sorry': '对不起',
+                    'please': '请',
+                    'you\'re welcome': '不客气',
+                    'i love you': '我爱你',
+                    'help': '帮助',
+                    'friend': '朋友',
+                    'family': '家人',
+                    'work': '工作',
+                    'study': '学习'
+                }
+            };
+
+            const key = `${sourceCode}_${targetCode}`;
+            const dict = translations[key];
+            
+            if (dict) {
+                const lowerText = text.toLowerCase().trim();
+                return dict[lowerText] || null;
+            }
+            
+            return null;
+        }
+
+        // 转换语言代码
+        function convertToMyMemoryCode(code) {
+            const codeMap = {
+                'auto': 'auto',
+                'zh-CN': 'zh-CN',
+                'zh-TW': 'zh-TW',
+                'en-US': 'en',
+                'ja-JP': 'ja',
+                'ko-KR': 'ko',
+                'fr-FR': 'fr',
+                'de-DE': 'de',
+                'es-ES': 'es',
+                'ru-RU': 'ru',
+                'ar-SA': 'ar',
+                'pt-PT': 'pt',
+                'it-IT': 'it',
+                'th-TH': 'th',
+                'vi-VN': 'vi'
+            };
+            return codeMap[code] || code.split('-')[0];
+        }
+
+        // 口语化处理
+        function makeColloquial(text) {
+            // 基本的口语化转换
+            const colloquialMap = {
+                'I am': "I'm",
+                'you are': "you're",
+                'he is': "he's",
+                'she is': "she's",
+                'it is': "it's",
+                'we are': "we're",
+                'they are': "they're",
+                'I will': "I'll",
+                'you will': "you'll",
+                'he will': "he'll",
+                'she will': "she'll",
+                'we will': "we'll",
+                'they will': "they'll",
+                'do not': "don't",
+                'does not': "doesn't",
+                'did not': "didn't",
+                'cannot': "can't",
+                'could not': "couldn't",
+                'would not': "wouldn't",
+                'should not': "shouldn't",
+                'have not': "haven't",
+                'has not': "hasn't",
+                'had not': "hadn't",
+                'is not': "isn't",
+                'are not': "aren't",
+                'was not': "wasn't",
+                'were not': "weren't",
+                'will not': "won't"
+            };
+
+            let result = text;
+            for (const [formal, colloquial] of Object.entries(colloquialMap)) {
+                const regex = new RegExp('\\b' + formal + '\\b', 'gi');
+                result = result.replace(regex, colloquial);
+            }
+
+            return result;
+        }
+
+        // 本地简单翻译（降级方案）
+        function localTranslate(text, targetLangCode) {
+            // 这是一个非常基础的翻译字典，仅用于演示
+            const basicTranslations = {
+                'zh-CN': {
+                    'en-US': {
+                        '你好': 'Hello',
+                        '谢谢': 'Thank you',
+                        '再见': 'Goodbye',
+                        '是': 'Yes',
+                        '不': 'No'
+                    }
+                },
+                'en-US': {
+                    'zh-CN': {
+                        'hello': '你好',
+                        'thank you': '谢谢',
+                        'goodbye': '再见',
+                        'yes': '是',
+                        'no': '不'
+                    }
+                }
+            };
+
+            const sourceLangCode = sourceLang.value === 'auto' ? 'zh-CN' : sourceLang.value;
+            
+            if (basicTranslations[sourceLangCode] && basicTranslations[sourceLangCode][targetLangCode]) {
+                const lowerText = text.toLowerCase();
+                return basicTranslations[sourceLangCode][targetLangCode][lowerText] || null;
+            }
+
+            return null;
+        }
+
+        // 语音朗读（优化版 - 更清晰的发音）
+        function speakText() {
+            const text = outputText.value.trim();
+            if (!text) {
+                updateStatus('没有可朗读的内容', false);
+                return;
+            }
+
+            if ('speechSynthesis' in window) {
+                // 停止当前朗读
+                window.speechSynthesis.cancel();
+
+                // 等待语音引擎加载
+                setTimeout(() => {
+                    const voices = window.speechSynthesis.getVoices();
+                    const langCode = targetLang.value;
+                    
+                    // 预处理文本 - 优化断句
+                    const processedText = preprocessTextForSpeech(text, langCode);
+                    
+                    // 选择最佳语音引擎
+                    const bestVoice = selectBestVoice(voices, langCode);
+                    
+                    const utterance = new SpeechSynthesisUtterance(processedText);
+                    utterance.lang = langCode;
+                    
+                    // 设置最佳语音
+                    if (bestVoice) {
+                        utterance.voice = bestVoice;
+                    }
+                    
+                    // 优化语音参数（使用用户设置的语速）
+                    const voiceSettings = getOptimalVoiceSettings(langCode);
+                    utterance.rate = userSpeechRate; // 使用用户自定义语速
+                    utterance.pitch = voiceSettings.pitch;
+                    utterance.volume = voiceSettings.volume;
+
+                    utterance.onstart = () => {
+                        speakBtn.disabled = true;
+                        speakBtn.innerHTML = '<span>⏸ 停止朗读</span>';
+                        speakBtn.classList.add('btn-danger');
+                        speakBtn.classList.remove('btn-success');
+                        updateStatus('🔊 正在朗读...', false);
+                    };
+
+                    utterance.onend = () => {
+                        speakBtn.disabled = false;
+                        speakBtn.innerHTML = '<span>🔊 朗读翻译</span>';
+                        speakBtn.classList.add('btn-success');
+                        speakBtn.classList.remove('btn-danger');
+                        updateStatus('朗读完成', false);
+                    };
+
+                    utterance.onerror = (event) => {
+                        console.error('朗读错误:', event);
+                        speakBtn.disabled = false;
+                        speakBtn.innerHTML = '<span>🔊 朗读翻译</span>';
+                        speakBtn.classList.add('btn-success');
+                        speakBtn.classList.remove('btn-danger');
+                        updateStatus('朗读完成', false);
+                    };
+
+                    // 点击按钮时可以停止朗读
+                    speakBtn.onclick = () => {
+                        if (window.speechSynthesis.speaking) {
+                            window.speechSynthesis.cancel();
+                            speakBtn.disabled = false;
+                            speakBtn.innerHTML = '<span>🔊 朗读翻译</span>';
+                            speakBtn.classList.add('btn-success');
+                            speakBtn.classList.remove('btn-danger');
+                            updateStatus('已停止朗读', false);
+                        } else {
+                            speakText();
+                        }
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                }, 100);
+            } else {
+                updateStatus('当前浏览器不支持语音播放', false);
+            }
+        }
+
+        // 预处理文本以优化语音合成
+        function preprocessTextForSpeech(text, langCode) {
+            let processed = text;
+            
+            // 根据语言进行不同的处理
+            if (langCode.startsWith('zh')) {
+                // 中文：优化断句
+                processed = processed.replace(/([。！？；])/g, '$1 '); // 句号后加停顿
+                processed = processed.replace(/([，、])/g, '$1'); // 逗号保持
+                processed = processed.replace(/\s+/g, ' '); // 清理多余空格
+            } else if (langCode.startsWith('en')) {
+                // 英文：优化断句和缩写
+                processed = processed.replace(/([.!?])\s*/g, '$1 '); // 句末加停顿
+                processed = processed.replace(/([,;:])\s*/g, '$1 '); // 标点后加空格
+                processed = processed.replace(/\s+/g, ' '); // 清理多余空格
+                
+                // 处理常见缩写，让发音更自然
+                processed = processed.replace(/\bi\.e\./gi, 'that is');
+                processed = processed.replace(/\be\.g\./gi, 'for example');
+                processed = processed.replace(/\betc\./gi, 'et cetera');
+            } else if (langCode.startsWith('ja')) {
+                // 日文：优化断句
+                processed = processed.replace(/([。！？])/g, '$1 ');
+                processed = processed.replace(/([、，])/g, '$1');
+            } else if (langCode.startsWith('ko')) {
+                // 韩文：优化断句
+                processed = processed.replace(/([.!?。！？])/g, '$1 ');
+            }
+            
+            return processed.trim();
+        }
+
+        // 选择最佳语音引擎
+        function selectBestVoice(voices, langCode) {
+            if (!voices || voices.length === 0) return null;
+            
+            // 将语言代码转换为简短格式
+            const shortLang = langCode.split('-')[0];
+            
+            // 定义优先级（高质量语音优先）
+            const voicePriority = {
+                'zh': ['Google 普通话', 'Microsoft Huihui', 'Ting-Ting', 'Sin-ji', 'Google 國語', 'Microsoft Zhiwei'],
+                'en': ['Google US English', 'Google UK English', 'Samantha', 'Microsoft Zira', 'Microsoft David', 'Alex'],
+                'ja': ['Google 日本語', 'Kyoko', 'Microsoft Haruka', 'Otoya'],
+                'ko': ['Google 한국의', 'Yuna', 'Microsoft Heami'],
+                'fr': ['Google français', 'Thomas', 'Microsoft Hortense'],
+                'de': ['Google Deutsch', 'Anna', 'Microsoft Hedda'],
+                'es': ['Google español', 'Monica', 'Microsoft Helena'],
+                'ru': ['Google русский', 'Milena', 'Microsoft Irina'],
+                'ar': ['Google العربية', 'Maged', 'Microsoft Naayf'],
+                'it': ['Google italiano', 'Alice', 'Microsoft Elsa'],
+                'pt': ['Google português', 'Luciana', 'Microsoft Heloisa'],
+                'th': ['Google ไทย', 'Microsoft Achara'],
+                'vi': ['Google Tiếng Việt']
+            };
+            
+            const preferredVoices = voicePriority[shortLang] || [];
+            
+            // 首先尝试匹配高质量语音
+            for (const preferred of preferredVoices) {
+                const voice = voices.find(v => v.name.includes(preferred));
+                if (voice) return voice;
+            }
+            
+            // 然后尝试本地语音
+            const localVoices = voices.filter(v => 
+                v.lang.startsWith(shortLang) && v.localService
+            );
+            if (localVoices.length > 0) {
+                // 优先选择包含"Premium"或"Enhanced"的语音
+                const premiumVoice = localVoices.find(v => 
+                    v.name.includes('Premium') || 
+                    v.name.includes('Enhanced') ||
+                    v.name.includes('Natural')
+                );
+                if (premiumVoice) return premiumVoice;
+                return localVoices[0];
+            }
+            
+            // 最后尝试任何匹配语言的语音
+            const matchingVoices = voices.filter(v => v.lang.startsWith(shortLang));
+            if (matchingVoices.length > 0) {
+                // 优先Google语音
+                const googleVoice = matchingVoices.find(v => v.name.includes('Google'));
+                if (googleVoice) return googleVoice;
+                return matchingVoices[0];
+            }
+            
+            return null;
+        }
+
+        // 获取最佳语音参数设置
+        function getOptimalVoiceSettings(langCode) {
+            const shortLang = langCode.split('-')[0];
+            
+            // 不同语言的最佳参数（参考Google翻译和百度翻译）
+            const settings = {
+                'zh': { rate: 0.85, pitch: 1.0, volume: 1.0 },    // 中文：稍慢，清晰
+                'en': { rate: 0.9, pitch: 1.0, volume: 1.0 },     // 英文：自然语速
+                'ja': { rate: 0.85, pitch: 1.05, volume: 1.0 },   // 日文：稍慢，音调略高
+                'ko': { rate: 0.88, pitch: 1.0, volume: 1.0 },    // 韩文：适中
+                'fr': { rate: 0.9, pitch: 1.0, volume: 1.0 },     // 法文：流畅
+                'de': { rate: 0.88, pitch: 0.98, volume: 1.0 },   // 德文：稍慢，音调略低
+                'es': { rate: 0.92, pitch: 1.02, volume: 1.0 },   // 西班牙文：略快
+                'ru': { rate: 0.85, pitch: 0.98, volume: 1.0 },   // 俄文：稍慢
+                'ar': { rate: 0.85, pitch: 1.0, volume: 1.0 },    // 阿拉伯文：清晰
+                'it': { rate: 0.9, pitch: 1.0, volume: 1.0 },     // 意大利文：自然
+                'pt': { rate: 0.88, pitch: 1.0, volume: 1.0 },    // 葡萄牙文：适中
+                'th': { rate: 0.85, pitch: 1.0, volume: 1.0 },    // 泰文：清晰
+                'vi': { rate: 0.88, pitch: 1.0, volume: 1.0 }     // 越南文：适中
+            };
+            
+            return settings[shortLang] || { rate: 0.9, pitch: 1.0, volume: 1.0 };
+        }
+
+        // 复制文本
+        function copyToClipboard() {
+            const text = outputText.value.trim();
+            if (!text) {
+                updateStatus('没有可复制的内容', false);
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                updateStatus('✅ 已复制到剪贴板', false);
+                
+                // 更新按钮文字
+                copyBtn.innerHTML = '<span>✅ 已复制</span>';
+                
+                // 显示成功提示
+                showSuccessNotification('已复制到剪贴板');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<span>📋 复制结果</span>';
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                // 降级方案
+                try {
+                    outputText.select();
+                    document.execCommand('copy');
+                    updateStatus('✅ 已复制到剪贴板', false);
+                    copyBtn.innerHTML = '<span>✅ 已复制</span>';
+                    showSuccessNotification('已复制到剪贴板');
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<span>📋 复制结果</span>';
+                    }, 2000);
+                } catch (e) {
+                    updateStatus('复制失败，请手动复制', false);
+                }
+            });
+        }
+
+        // 显示成功通知
+        function showSuccessNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                color: #1d1d1f;
+                padding: 14px 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                font-weight: 500;
+                font-size: 0.95em;
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                opacity: 0;
+                transform: translateY(-10px);
+                transition: all 0.3s ease;
+            `;
+            notification.innerHTML = `<span style="color: #34c759; font-size: 1.2em;">✓</span> ${message}`;
+            
+            document.body.appendChild(notification);
+            
+            // 触发动画
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateY(0)';
+            }, 10);
+            
+            // 移除通知
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-10px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 2500);
+        }
+
+        // 清空内容
+        function clearAll() {
+            // 停止语音朗读
+            if (window.speechSynthesis && window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+            
+            // 清除定时器
+            if (translationTimer) {
+                clearTimeout(translationTimer);
+            }
+            
+            inputText.value = '';
+            outputText.value = '';
+            updateCharCount();
+            updateOutputCharCount();
+            translatingIndicator.classList.remove('active');
+            
+            // 隐藏语音控制面板
+            if (voiceControls) {
+                voiceControls.style.display = 'none';
+            }
+            
+            // 重置语音按钮状态
+            speakBtn.disabled = false;
+            speakBtn.innerHTML = '<span>🔊 朗读翻译</span>';
+            speakBtn.classList.add('btn-success');
+            speakBtn.classList.remove('btn-danger');
+            
+            updateStatus('准备就绪', false);
+        }
+
+        // 交换语言
+        function swapLanguages() {
+            if (sourceLang.value === 'auto') {
+                updateStatus('自动检测模式无法交换语言', true);
+                return;
+            }
+
+            const temp = sourceLang.value;
+            sourceLang.value = targetLang.value;
+            targetLang.value = temp;
+
+            const tempText = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = tempText;
+
+            updateCharCount();
+            updateOutputCharCount();
+            updateStatus('语言已交换', false);
+        }
+
+        // 更新字符计数
+        function updateCharCount() {
+            const count = inputText.value.length;
+            charCount.textContent = `${count} / 5000 字符`;
+            if (count > 5000) {
+                charCount.style.color = '#c62828';
+            } else {
+                charCount.style.color = '#666';
+            }
+        }
+
+        function updateOutputCharCount() {
+            const count = outputText.value.length;
+            outputCharCount.textContent = `${count} 字符`;
+        }
+
+        // 更新状态栏
+        function updateStatus(message, isError = false) {
+            statusBar.textContent = message;
+            if (isError) {
+                statusBar.style.background = '#ffebee';
+                statusBar.style.color = '#c62828';
+            } else {
+                statusBar.style.background = '#e3f2fd';
+                statusBar.style.color = '#1976d2';
+            }
+            statusBar.classList.remove('recording');
+        }
+
+        // 添加到历史记录
+        function addToHistory(source, translation, sourceLang, targetLang) {
+            const historyItem = {
+                source,
+                translation,
+                sourceLang,
+                targetLang,
+                timestamp: new Date().toLocaleString('zh-CN')
+            };
+
+            translationHistory.unshift(historyItem);
+            if (translationHistory.length > 10) {
+                translationHistory.pop();
+            }
+
+            renderHistory();
+        }
+
+        // 渲染历史记录
+        function renderHistory() {
+            if (translationHistory.length === 0) {
+                historyList.innerHTML = '<div style="text-align: center; color: #999;">暂无翻译历史</div>';
+                return;
+            }
+
+            historyList.innerHTML = translationHistory.map((item, index) => `
+                <div class="history-item" onclick="loadHistoryItem(${index})">
+                    <div class="history-text">${item.source}</div>
+                    <div class="history-translation">→ ${item.translation}</div>
+                    <div style="font-size: 0.8em; color: #999; margin-top: 5px;">${item.timestamp}</div>
+                </div>
+            `).join('');
+        }
+
+        // 加载历史记录项
+        function loadHistoryItem(index) {
+            const item = translationHistory[index];
+            inputText.value = item.source;
+            outputText.value = item.translation;
+            updateCharCount();
+            updateOutputCharCount();
+            updateStatus('已加载历史记录', false);
+        }
+
+        // 模式切换
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+
+                switch(currentMode) {
+                    case 'auto':
+                        sourceLang.value = 'auto';
+                        targetLang.value = 'en-US';
+                        updateStatus('自动检测语言模式', false);
+                        break;
+                    case 'chinese-to-english':
+                        sourceLang.value = 'zh-CN';
+                        targetLang.value = 'en-US';
+                        updateStatus('中文转英文口语模式', false);
+                        break;
+                    case 'voice-translation':
+                        sourceLang.value = 'zh-CN';
+                        targetLang.value = 'en-US';
+                        updateStatus('语音实时翻译模式', false);
+                        break;
+                }
+
+                // 如果有内容，重新翻译
+                if (inputText.value.trim()) {
+                    scheduleTranslation(500);
+                }
+            });
+        });
+
+        // 快捷短语
+        phraseBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                inputText.value = btn.dataset.phrase;
+                updateCharCount();
+                scheduleTranslation(300); // 快捷短语快速翻译
+            });
+        });
+
+        // 事件监听器
+        voiceBtn.addEventListener('click', () => {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        clearBtn.addEventListener('click', clearAll);
+        swapBtn.addEventListener('click', swapLanguages);
+        copyBtn.addEventListener('click', copyToClipboard);
+        
+        // 语音按钮初始绑定
+        speakBtn.addEventListener('click', speakText);
+        
+        // 语速控制
+        if (speedControl) {
+            speedControl.addEventListener('input', (e) => {
+                userSpeechRate = parseFloat(e.target.value);
+                speedValue.textContent = userSpeechRate.toFixed(1) + 'x';
+                
+                // 更新滑块进度条背景
+                const percentage = ((userSpeechRate - 0.5) / (1.5 - 0.5)) * 100;
+                e.target.style.background = `linear-gradient(to right, #007aff 0%, #007aff ${percentage}%, rgba(120,120,128,0.2) ${percentage}%, rgba(120,120,128,0.2) 100%)`;
+            });
+            
+            // 初始化滑块背景
+            const initialPercentage = ((userSpeechRate - 0.5) / (1.5 - 0.5)) * 100;
+            speedControl.style.background = `linear-gradient(to right, #007aff 0%, #007aff ${initialPercentage}%, rgba(120,120,128,0.2) ${initialPercentage}%, rgba(120,120,128,0.2) 100%)`;
+        }
+
+        // 输入时自动翻译（带防抖）
+        inputText.addEventListener('input', () => {
+            updateCharCount();
+            scheduleTranslation(1500); // 停止输入1.5秒后自动翻译
+        });
+
+        // 语言切换时自动重新翻译
+        sourceLang.addEventListener('change', () => {
+            if (inputText.value.trim()) {
+                scheduleTranslation(500);
+            }
+        });
+
+        targetLang.addEventListener('change', () => {
+            if (inputText.value.trim()) {
+                scheduleTranslation(500);
+            }
+        });
+
+        // 初始化
+        updateCharCount();
+        updateOutputCharCount();
+        renderHistory();
+
+        // 检查浏览器支持并初始化语音引擎
+        window.addEventListener('load', () => {
+            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                voiceBtn.disabled = true;
+                voiceBtn.title = '当前浏览器不支持语音识别';
+                updateStatus('请使用 Chrome、Edge 或 Safari 浏览器获得完整体验', false);
+            }
+
+            if (!('speechSynthesis' in window)) {
+                speakBtn.disabled = true;
+                speakBtn.title = '当前浏览器不支持语音播放';
+            } else {
+                // 预加载语音引擎列表
+                window.speechSynthesis.getVoices();
+                
+                // 监听语音列表变化（某些浏览器需要异步加载）
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        const voices = window.speechSynthesis.getVoices();
+                        console.log(`已加载 ${voices.length} 个语音引擎`);
+                    };
+                }
+            }
+        });
+    </script>
+</body>
+</html>
