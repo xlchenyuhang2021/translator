@@ -17,7 +17,7 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             padding: 20px;
             color: #1d1d1f;
         }
@@ -30,6 +30,7 @@
             width: 100%;
             padding: 50px;
             animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            margin: 20px 0;
         }
 
         @keyframes fadeIn {
@@ -319,11 +320,108 @@
             }
 
             h1 {
-                font-size: 2.2em;
+                font-size: 1.8em;
+                margin-bottom: 20px;
             }
 
             .container {
-                padding: 30px 24px;
+                padding: 20px 16px;
+                border-radius: 12px;
+            }
+
+            .mode-selector {
+                width: 100%;
+                padding: 4px;
+                gap: 8px;
+            }
+
+            .mode-btn {
+                padding: 8px 12px;
+                font-size: 0.85em;
+                flex: 1;
+            }
+
+            .input-panel, .output-panel {
+                padding: 16px;
+            }
+
+            textarea {
+                min-height: 150px;
+                font-size: 1em;
+            }
+
+            .controls {
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.9em;
+                flex: 1;
+            }
+
+            .quick-phrases {
+                gap: 6px;
+            }
+
+            .phrase-btn {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+
+            .history-panel {
+                max-height: 250px;
+                padding: 16px;
+            }
+
+            .feature-hint {
+                padding: 12px 16px;
+                font-size: 0.9em;
+            }
+
+            .status-bar {
+                padding: 10px 16px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 16px;
+            }
+
+            .container {
+                padding: 16px 12px;
+            }
+
+            .mode-btn {
+                padding: 8px 10px;
+                font-size: 0.8em;
+            }
+
+            textarea {
+                min-height: 120px;
+                font-size: 0.95em;
+                padding: 12px;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 0.85em;
+            }
+
+            .language-select {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+
+            .panel-title {
+                font-size: 0.85em;
             }
         }
 
@@ -492,7 +590,7 @@
         <h1>🌍 智能多语言翻译器</h1>
         
         <div class="feature-hint">
-            <strong>💡 智能提示：</strong> 无需点击翻译按钮，输入文字或语音后会自动翻译。支持多语言实时互译。
+            <strong>💡 智能提示：</strong> 无需点击翻译按钮，输入文字后会自动翻译。支持多语言实时互译。
         </div>
 
         <div class="status-bar" id="statusBar">
@@ -500,9 +598,8 @@
         </div>
 
         <div class="mode-selector">
-            <button class="mode-btn active" data-mode="auto">🔄 自动检测翻译</button>
-            <button class="mode-btn" data-mode="chinese-to-english">🇨🇳→🇬🇧 中文转英文（口语化）</button>
-            <button class="mode-btn" data-mode="voice-translation">🎤 语音实时翻译</button>
+            <button class="mode-btn active" data-mode="auto">🔄 自动检测</button>
+            <button class="mode-btn" data-mode="chinese-to-english">🇨🇳→🇬🇧 中英口语化</button>
         </div>
 
         <div class="translator-section">
@@ -527,13 +624,10 @@
                         <option value="vi-VN">越南语</option>
                     </select>
                 </div>
-                <textarea id="inputText" placeholder="开始输入或点击麦克风说话，将自动翻译..."></textarea>
+                <textarea id="inputText" placeholder="开始输入文字，将自动翻译..."></textarea>
                 <div class="char-count" id="charCount">0 / 5000 字符</div>
                 <div class="translating-indicator" id="translatingIndicator">⏳ 正在翻译...</div>
                 <div class="controls">
-                    <button class="btn btn-danger" id="voiceBtn">
-                        <span>🎤 开始语音</span>
-                    </button>
                     <button class="btn btn-secondary" id="clearBtn">
                         <span>✕ 清空</span>
                     </button>
@@ -601,19 +695,20 @@
 
     <script>
         // 全局变量
-        let recognition = null;
-        let isRecording = false;
         let currentMode = 'auto';
         let translationHistory = [];
         let translationTimer = null;
         let isTranslating = false;
+
+        // DeepSeek API 配置
+        const DEEPSEEK_API_KEY = 'sk-5293fc97343945cd92a46a357f307eaa';
+        const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/chat/completions';
 
         // DOM 元素
         const inputText = document.getElementById('inputText');
         const outputText = document.getElementById('outputText');
         const sourceLang = document.getElementById('sourceLang');
         const targetLang = document.getElementById('targetLang');
-        const voiceBtn = document.getElementById('voiceBtn');
         const clearBtn = document.getElementById('clearBtn');
         const swapBtn = document.getElementById('swapBtn');
         const speakBtn = document.getElementById('speakBtn');
@@ -633,111 +728,6 @@
         let userSpeechRate = 0.9;
 
         // 初始化语音识别
-        function initSpeechRecognition() {
-            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.continuous = true;
-                recognition.interimResults = true;
-
-                recognition.onstart = () => {
-                    isRecording = true;
-                    voiceBtn.classList.add('recording');
-                    voiceBtn.innerHTML = '<span>⏹ 停止录音</span>';
-                    statusBar.classList.add('recording');
-                    statusBar.textContent = '🎤 正在录音中，说完话会自动翻译...';
-                };
-
-                recognition.onresult = (event) => {
-                    let interimTranscript = '';
-                    let finalTranscript = '';
-
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        const transcript = event.results[i][0].transcript;
-                        if (event.results[i].isFinal) {
-                            finalTranscript += transcript;
-                        } else {
-                            interimTranscript += transcript;
-                        }
-                    }
-
-                    if (finalTranscript) {
-                        inputText.value += finalTranscript + ' ';
-                        updateCharCount();
-                        
-                        // 语音输入完成后自动翻译（延迟800ms，避免太快）
-                        scheduleTranslation(800);
-                    }
-                };
-
-                recognition.onerror = (event) => {
-                    console.error('语音识别错误:', event.error);
-                    updateStatus(`语音识别错误: ${getErrorMessage(event.error)}`, true);
-                    stopRecording();
-                };
-
-                recognition.onend = () => {
-                    if (isRecording) {
-                        // 如果用户没有手动停止，继续录音
-                        recognition.start();
-                    } else {
-                        stopRecording();
-                    }
-                };
-
-                return true;
-            } else {
-                alert('您的浏览器不支持语音识别功能。请使用 Chrome、Edge 或 Safari 浏览器。');
-                return false;
-            }
-        }
-
-        function getErrorMessage(error) {
-            const errorMessages = {
-                'no-speech': '未检测到语音',
-                'audio-capture': '无法捕获音频',
-                'not-allowed': '未授予麦克风权限',
-                'network': '网络错误',
-                'aborted': '录音被中断'
-            };
-            return errorMessages[error] || error;
-        }
-
-        function startRecording() {
-            if (!recognition && !initSpeechRecognition()) {
-                return;
-            }
-
-            const langCode = sourceLang.value === 'auto' ? 'zh-CN' : sourceLang.value;
-            recognition.lang = langCode;
-            
-            try {
-                recognition.start();
-            } catch (error) {
-                console.error('启动录音失败:', error);
-                updateStatus('启动录音失败，请重试', true);
-            }
-        }
-
-        function stopRecording() {
-            if (recognition) {
-                isRecording = false;
-                voiceBtn.classList.remove('recording');
-                voiceBtn.innerHTML = '<span>🎤 开始语音</span>';
-                statusBar.classList.remove('recording');
-                statusBar.textContent = '录音已停止，准备翻译...';
-                try {
-                    recognition.stop();
-                    // 停止录音后自动翻译
-                    if (inputText.value.trim()) {
-                        scheduleTranslation(500);
-                    }
-                } catch (error) {
-                    console.error('停止录音失败:', error);
-                }
-            }
-        }
-
         // 安排翻译（带防抖）
         function scheduleTranslation(delay = 1000) {
             // 清除之前的定时器
@@ -782,7 +772,90 @@
             }
         }
 
-        // 翻译功能（改进版 - 修复自动检测bug）
+        // 使用 DeepSeek API 进行翻译
+        async function translateWithDeepSeek(text, sourceLangCode, targetLangCode) {
+            const sourceLangName = getLanguageName(sourceLangCode);
+            const targetLangName = getLanguageName(targetLangCode);
+            
+            // 构建翻译提示词
+            let systemPrompt = `You are a professional translator. Translate the given text accurately and naturally.`;
+            let userPrompt = `Translate the following text from ${sourceLangName} to ${targetLangName}. Only provide the translation, without any explanations or additional text.\n\nText to translate: ${text}`;
+            
+            // 如果是中文转英文口语化模式
+            if (currentMode === 'chinese-to-english' && targetLangCode.startsWith('en')) {
+                systemPrompt = `You are a professional translator specializing in colloquial English. Translate Chinese to natural, conversational English.`;
+                userPrompt = `Translate the following Chinese text to colloquial, natural English. Use contractions (like I'm, don't, can't) and conversational expressions. Only provide the translation.\n\nText: ${text}`;
+            }
+
+            try {
+                const response = await fetch(DEEPSEEK_BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        stream: false,
+                        temperature: 0.3
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`DeepSeek API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+                    return data.choices[0].message.content.trim();
+                } else {
+                    throw new Error('Invalid response from DeepSeek API');
+                }
+            } catch (error) {
+                console.error('DeepSeek API 错误:', error);
+                throw error;
+            }
+        }
+
+        // 获取语言名称
+        function getLanguageName(code) {
+            const languageNames = {
+                'zh-CN': 'Simplified Chinese',
+                'zh-TW': 'Traditional Chinese',
+                'en-US': 'English',
+                'en': 'English',
+                'ja-JP': 'Japanese',
+                'ja': 'Japanese',
+                'ko-KR': 'Korean',
+                'ko': 'Korean',
+                'fr-FR': 'French',
+                'fr': 'French',
+                'de-DE': 'German',
+                'de': 'German',
+                'es-ES': 'Spanish',
+                'es': 'Spanish',
+                'ru-RU': 'Russian',
+                'ru': 'Russian',
+                'ar-SA': 'Arabic',
+                'ar': 'Arabic',
+                'pt-PT': 'Portuguese',
+                'pt': 'Portuguese',
+                'it-IT': 'Italian',
+                'it': 'Italian',
+                'th-TH': 'Thai',
+                'th': 'Thai',
+                'vi-VN': 'Vietnamese',
+                'vi': 'Vietnamese'
+            };
+            return languageNames[code] || code;
+        }
+
+        // 翻译功能（改进版 - 使用 DeepSeek API）
         async function translate() {
             const text = inputText.value.trim();
             if (!text) {
@@ -811,7 +884,7 @@
                     console.log('检测到的语言:', sourceLangCode);
                 }
 
-                // 转换语言代码为 API 格式
+                // 转换语言代码为标准格式
                 const sourceCode = convertToMyMemoryCode(sourceLangCode);
                 const targetCode = convertToMyMemoryCode(targetLangCode);
 
@@ -823,10 +896,17 @@
                     return;
                 }
 
-                // 尝试多个翻译API
                 let translatedText = null;
                 
-                // 方法1: 使用 MyMemory API
+                // 优先使用 DeepSeek API
+                try {
+                    console.log('使用 DeepSeek API 翻译...');
+                    translatedText = await translateWithDeepSeek(text, sourceCode, targetCode);
+                    console.log('DeepSeek 翻译成功');
+                } catch (deepseekError) {
+                    console.log('DeepSeek API 失败，尝试备用方案...', deepseekError);
+                    
+                    // 备用方案1: 使用 MyMemory API
                 try {
                     const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceCode}|${targetCode}`;
                     const response = await fetch(apiUrl);
@@ -835,7 +915,6 @@
                     if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
                         translatedText = data.responseData.translatedText;
                         
-                        // 检查是否是有效翻译（不只是返回原文）
                         if (translatedText && translatedText.toLowerCase() !== text.toLowerCase()) {
                             console.log('MyMemory 翻译成功');
                         } else {
@@ -845,49 +924,15 @@
                         throw new Error('API返回错误');
                     }
                 } catch (apiError) {
-                    console.log('MyMemory API失败，尝试LibreTranslate...', apiError);
-                    
-                    // 方法2: 使用 LibreTranslate (备用)
-                    try {
-                        const libreUrl = 'https://libretranslate.de/translate';
-                        const libreResponse = await fetch(libreUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                q: text,
-                                source: sourceCode,
-                                target: targetCode,
-                                format: 'text'
-                            })
-                        });
+                        console.log('MyMemory API 也失败了', apiError);
                         
-                        if (libreResponse.ok) {
-                            const libreData = await libreResponse.json();
-                            if (libreData.translatedText) {
-                                translatedText = libreData.translatedText;
-                                console.log('LibreTranslate 翻译成功');
-                            }
-                        }
-                    } catch (libreError) {
-                        console.log('LibreTranslate 也失败了', libreError);
-                    }
-                }
-
-                // 如果所有API都失败，使用本地翻译
-                if (!translatedText) {
-                    console.log('尝试本地翻译...');
+                        // 备用方案2: 使用本地翻译
                     translatedText = localTranslate(text, targetLangCode) || 
                                    enhancedLocalTranslate(text, sourceCode, targetCode);
                 }
-
-                if (translatedText) {
-                    // 如果是中文转英文口语化模式，进行口语化处理
-                    if (currentMode === 'chinese-to-english' && targetCode === 'en') {
-                        translatedText = makeColloquial(translatedText);
                     }
 
+                if (translatedText) {
                     outputText.value = translatedText;
                     updateOutputCharCount();
                     updateStatus('✅ 翻译完成', false);
@@ -1495,11 +1540,6 @@
                         targetLang.value = 'en-US';
                         updateStatus('中文转英文口语模式', false);
                         break;
-                    case 'voice-translation':
-                        sourceLang.value = 'zh-CN';
-                        targetLang.value = 'en-US';
-                        updateStatus('语音实时翻译模式', false);
-                        break;
                 }
 
                 // 如果有内容，重新翻译
@@ -1519,14 +1559,6 @@
         });
 
         // 事件监听器
-        voiceBtn.addEventListener('click', () => {
-            if (isRecording) {
-                stopRecording();
-            } else {
-                startRecording();
-            }
-        });
-
         clearBtn.addEventListener('click', clearAll);
         swapBtn.addEventListener('click', swapLanguages);
         copyBtn.addEventListener('click', copyToClipboard);
@@ -1576,12 +1608,6 @@
 
         // 检查浏览器支持并初始化语音引擎
         window.addEventListener('load', () => {
-            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-                voiceBtn.disabled = true;
-                voiceBtn.title = '当前浏览器不支持语音识别';
-                updateStatus('请使用 Chrome、Edge 或 Safari 浏览器获得完整体验', false);
-            }
-
             if (!('speechSynthesis' in window)) {
                 speakBtn.disabled = true;
                 speakBtn.title = '当前浏览器不支持语音播放';
